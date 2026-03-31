@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register | Campus Lost & Found</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="auth-container">
+    <div class="auth-card">
+      <h1>User Registration</h1>
+      <p class="subtitle">Create your account</p>
+
+      <form id="registerForm">
+        <label for="name">Full Name</label>
+        <input
+          type="text"
+          id="name"
+          placeholder="Enter your full name"
+          required
+        />
+
+        <label for="email">Email</label>
+        <input
+          type="email"
+          id="email"
+          placeholder="Enter your email"
+          required
+        />
+
+        <label for="password">Password</label>
+        <input
+          type="password"
+          id="password"
+          placeholder="Enter your password"
+          required
+        />
+
+        <button type="submit">Register</button>
+      </form>
+
+      <p class="bottom-text">
+        Already have an account? <a href="login.html">Login here</a>
+      </p>
+
+      <p id="message"></p>
+    </div>
+  </div>
+
+  <script>
+    const registerForm = document.getElementById("registerForm");
+    const message = document.getElementById("message");
+
+    registerForm.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const name = document.getElementById("name").value.trim();
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      if (!name || !email || !password) {
+        message.style.color = "red";
+        message.textContent = "Please fill all fields";
+        return;
+      }
+
+      try {
+        const response = await fetch("http://localhost:5000/api/user/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ name, email, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          message.style.color = "green";
+          message.textContent = data.message || "Registration successful!";
+          registerForm.reset();
+
+          setTimeout(() => {
+            window.location.href = "login.html";
+          }, 1000);
+        } else {
+          message.style.color = "red";
+          message.textContent = data.message || "Registration failed.";
+        }
+      } catch (error) {
+        message.style.color = "red";
+        message.textContent = "Server error. Please check backend connection.";
+        console.error("Register error:", error);
+      }
+    });
+  </script>
+
+</body>
+</html>

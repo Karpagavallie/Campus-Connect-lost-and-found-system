@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Report Found Item | Campus Lost & Found</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="logo">Campus Lost & Found</div>
+    <div class="nav-right">
+      <span class="user-name" id="welcomeName">Welcome, User</span>
+      <a href="#" class="logout-btn" id="logoutBtn">Logout</a>
+    </div>
+  </nav>
+
+  <div class="page-container">
+    <div class="page-header">
+      <h1>Report Found Item</h1>
+      <p>Submit details of the item you found.</p>
+    </div>
+
+    <div class="form-card">
+      <form id="foundForm">
+        <label for="itemName">Item Name</label>
+        <input type="text" id="itemName" placeholder="Enter item name" required />
+
+        <label for="category">Category</label>
+        <select id="category" required>
+          <option value="">Select category</option>
+          <option>Wallet</option>
+          <option>ID Card</option>
+          <option>Keys</option>
+          <option>Bag</option>
+          <option>Electronics</option>
+          <option>Other</option>
+        </select>
+
+        <label for="location">Found Location</label>
+        <input type="text" id="location" placeholder="Enter found location" required />
+
+        <label for="date">Found Date</label>
+        <input type="date" id="date" required />
+
+        <label for="description">Description</label>
+        <textarea id="description" placeholder="Describe the found item" required></textarea>
+
+        <button type="submit">Submit Found Report</button>
+      </form>
+
+      <p id="message"></p>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById("foundForm");
+    const message = document.getElementById("message");
+
+    const userName = localStorage.getItem("userName");
+    const userEmail = localStorage.getItem("userEmail");
+
+    if (!userName || !userEmail) {
+      window.location.href = "login.html";
+    } else {
+      document.getElementById("welcomeName").textContent = "Welcome, " + userName;
+    }
+
+    document.getElementById("logoutBtn").addEventListener("click", function (e) {
+      e.preventDefault();
+      localStorage.removeItem("userName");
+      localStorage.removeItem("userEmail");
+      window.location.href = "login.html";
+    });
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const itemName = document.getElementById("itemName").value.trim();
+      const category = document.getElementById("category").value;
+      const location = document.getElementById("location").value.trim();
+      const date = document.getElementById("date").value;
+      const description = document.getElementById("description").value.trim();
+
+      if (!itemName || !category || !location || !date || !description) {
+        message.style.color = "red";
+        message.textContent = "Please fill all fields";
+        return;
+      }
+
+      try {
+        const response = await fetch("http://localhost:5000/api/items/found", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            itemName,
+            category,
+            location,
+            date,
+            description,
+            userName,
+            userEmail
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          message.style.color = "green";
+          message.textContent = data.message || "Found item reported successfully";
+          form.reset();
+
+          setTimeout(() => {
+            window.location.href = "dashboard.html";
+          }, 1000);
+        } else {
+          message.style.color = "red";
+          message.textContent = data.message || "Failed to submit report";
+        }
+      } catch (error) {
+        console.error("Found report error:", error);
+        message.style.color = "red";
+        message.textContent = "Server error";
+      }
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Search Items | Campus Lost & Found</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="logo">Campus Lost & Found</div>
+    <div class="nav-right">
+      <span class="user-name" id="welcomeName">Welcome, User</span>
+      <a href="#" class="logout-btn" id="logoutBtn">Logout</a>
+    </div>
+  </nav>
+
+  <div class="page-container wide-page">
+    <div class="page-header">
+      <h1>Search Item</h1>
+      <p>Search items by name, category, location, or status.</p>
+    </div>
+
+    <div class="search-box">
+      <form id="searchForm">
+        <label for="searchName">Item Name</label>
+        <input type="text" id="searchName" placeholder="Enter item name" />
+
+        <label for="searchCategory">Category</label>
+        <select id="searchCategory">
+          <option value="">All Categories</option>
+          <option value="wallet">Wallet</option>
+          <option value="id card">ID Card</option>
+          <option value="keys">Keys</option>
+          <option value="bag">Bag</option>
+          <option value="electronics">Electronics</option>
+          <option value="other">Other</option>
+        </select>
+
+        <label for="searchLocation">Location</label>
+        <input type="text" id="searchLocation" placeholder="Enter location" />
+
+        <label for="searchStatus">Status</label>
+        <select id="searchStatus">
+          <option value="">All</option>
+          <option value="lost">Lost</option>
+          <option value="found">Found</option>
+        </select>
+
+        <button type="submit">Search</button>
+      </form>
+    </div>
+
+    <div class="results-space">
+      <p id="resultCount"></p>
+      <div class="items-container" id="resultsContainer">
+        <p>Enter search details and click Search.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const userName = localStorage.getItem("userName");
+    const userEmail = localStorage.getItem("userEmail");
+    const searchForm = document.getElementById("searchForm");
+    const resultsContainer = document.getElementById("resultsContainer");
+    const resultCount = document.getElementById("resultCount");
+
+    if (!userName || !userEmail) {
+      window.location.href = "login.html";
+    } else {
+      document.getElementById("welcomeName").textContent = "Welcome, " + userName;
+    }
+
+    document.getElementById("logoutBtn").addEventListener("click", function (e) {
+      e.preventDefault();
+      localStorage.removeItem("userName");
+      localStorage.removeItem("userEmail");
+      window.location.href = "login.html";
+    });
+
+    function displayItems(items) {
+      resultCount.textContent = `${items.length} item(s) found`;
+
+      if (!items.length) {
+        resultsContainer.innerHTML = "<p>No matching items found.</p>";
+        return;
+      }
+
+      resultsContainer.innerHTML = items.map(item => `
+        <div class="item-card">
+          <span class="status-badge ${item.type === "lost" ? "lost" : "found"}">
+           ${item.type.toUpperCase()}
+           </span>
+          <h3>${item.itemName}</h3>
+          <p><strong>Type:</strong> ${item.type}</p>
+          <p><strong>Category:</strong> ${item.category}</p>
+          <p><strong>Location:</strong> ${item.location}</p>
+          <p><strong>Date:</strong> ${item.date}</p>
+          <p><strong>Status:</strong> ${item.status}</p>
+          <a href="item-details.html?id=${item._id}" class="details-btn">View Details</a>
+        </div>
+      `).join("");
+    }
+
+    async function runSearch() {
+      const searchName = document.getElementById("searchName").value.trim().toLowerCase();
+      const searchCategory = document.getElementById("searchCategory").value.trim().toLowerCase();
+      const searchLocation = document.getElementById("searchLocation").value.trim().toLowerCase();
+      const searchStatus = document.getElementById("searchStatus").value.trim().toLowerCase();
+
+      try {
+        resultsContainer.innerHTML = "<p>Searching...</p>";
+        resultCount.textContent = "";
+
+        const response = await fetch("http://localhost:5000/api/items");
+        const items = await response.json();
+
+        if (!response.ok) {
+          resultsContainer.innerHTML = "<p>Failed to load items.</p>";
+          return;
+        }
+
+        const filteredItems = items.filter(item => {
+          const itemName = (item.itemName || "").toLowerCase();
+          const category = (item.category || "").toLowerCase();
+          const location = (item.location || "").toLowerCase();
+          const type = (item.type || "").toLowerCase();
+
+          const matchesName = !searchName || itemName.includes(searchName);
+          const matchesCategory = !searchCategory || category === searchCategory;
+          const matchesLocation = !searchLocation || location.includes(searchLocation);
+          const matchesStatus = !searchStatus || type === searchStatus;
+
+          return matchesName && matchesCategory && matchesLocation && matchesStatus;
+        });
+
+        displayItems(filteredItems);
+      } catch (error) {
+        console.error("SEARCH ERROR:", error);
+        resultCount.textContent = "";
+        resultsContainer.innerHTML = "<p>Server error</p>";
+      }
+    }
+
+    searchForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      runSearch();
+    });
+  </script>
+
+</body>
+</html>

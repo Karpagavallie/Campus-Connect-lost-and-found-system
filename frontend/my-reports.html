@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Reports | Campus Lost & Found</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="logo">Campus Lost & Found</div>
+    <div class="nav-right">
+      <span class="user-name" id="welcomeName">Welcome, User</span>
+      <a href="#" class="logout-btn" id="logoutBtn">Logout</a>
+    </div>
+  </nav>
+
+  <div class="page-container wide-page">
+    <div class="page-header">
+      <h1>My Reports</h1>
+      <p>View all lost and found items you reported.</p>
+    </div>
+
+    <div class="items-container" id="itemsContainer"></div>
+  </div>
+
+  <script>
+    const userName = localStorage.getItem("userName");
+    const userEmail = localStorage.getItem("userEmail");
+
+    if (!userName || !userEmail) {
+      window.location.href = "login.html";
+    } else {
+      document.getElementById("welcomeName").textContent = "Welcome, " + userName;
+    }
+
+    document.getElementById("logoutBtn").addEventListener("click", function (e) {
+      e.preventDefault();
+      localStorage.removeItem("userName");
+      localStorage.removeItem("userEmail");
+      window.location.href = "login.html";
+    });
+
+    async function loadMyReports() {
+      const itemsContainer = document.getElementById("itemsContainer");
+
+      try {
+        const response = await fetch("http://localhost:5000/api/items/my/" + encodeURIComponent(userEmail));
+        const items = await response.json();
+
+        if (!response.ok) {
+          itemsContainer.innerHTML = "<p>Failed to load your reports.</p>";
+          return;
+        }
+
+        if (!items.length) {
+          itemsContainer.innerHTML = "<p>You have not reported any items yet.</p>";
+          return;
+        }
+
+        itemsContainer.innerHTML = items.map(item => `
+          <div class="item-card">
+            <h3>${item.itemName}</h3>
+
+            <p><strong>Type:</strong> ${item.type}</p>
+            <p><strong>Category:</strong> ${item.category}</p>
+            <p><strong>Location:</strong> ${item.location}</p>
+            <p><strong>Date:</strong> ${item.date}</p>
+            <p><strong>Status:</strong> ${item.status}</p>
+
+            <div class="report-actions">
+              <a href="item-details.html?id=${item._id}" class="details-btn">View Details</a>
+
+              <button class="edit-btn"
+                onclick="editItem('${item._id}', \`${item.itemName}\`, \`${item.category}\`, \`${item.location}\`, \`${item.date}\`, \`${item.description}\`)">
+                Edit
+              </button>
+
+              ${item.type === "lost" && item.status !== "found" ? `
+                <button class="mark-found-btn" onclick="markAsFound('${item._id}')">
+                  Mark as Found
+                </button>
+              ` : ""}
+
+              <button class="delete-btn" onclick="deleteItem('${item._id}')">
+                Delete
+              </button>
+            </div>
+          </div>
+        `).join("");
+
+      } catch (error) {
+        console.error("Error loading my reports:", error);
+        itemsContainer.innerHTML = "<p>Failed to load your reports.</p>";
+      }
+    }
+
+    async function editItem(id, oldName, oldCategory, oldLocation, oldDate, oldDescription) {
+      const itemName = prompt("Edit item name:", oldName);
+      if (itemName === null) return;
+
+      const category = prompt("Edit category:", oldCategory);
+      if (category === null) return;
+
+      const location = prompt("Edit location:", oldLocation);
+      if (location === null) return;
+
+      const date = prompt("Edit date (YYYY-MM-DD):", oldDate);
+      if (date === null) return;
+
+      const description = prompt("Edit description:", oldDescription);
+      if (description === null) return;
+
+      if (!itemName.trim() || !category.trim() || !location.trim() || !date.trim() || !description.trim()) {
+        alert("All fields are required");
+        return;
+      }
+
+      try {
+        const response = await fetch("http://localhost:5000/api/items/" + id, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            itemName: itemName.trim(),
+            category: category.trim(),
+            location: location.trim(),
+            date: date.trim(),
+            description: description.trim()
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          alert(data.message || "Item updated successfully");
+          loadMyReports();
+        } else {
+          alert(data.message || "Failed to update item");
+        }
+      } catch (error) {
+        console.error("Edit error:", error);
+        alert("Server error while updating item");
+      }
+    }
+
+    async function deleteItem(id) {
+      const confirmDelete = confirm("Are you sure you want to delete this report?");
+      if (!confirmDelete) return;
+
+      try {
+        const response = await fetch("http://localhost:5000/api/items/" + id, {
+          method: "DELETE"
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          alert(data.message || "Item deleted successfully");
+          loadMyReports();
+        } else {
+          alert(data.message || "Failed to delete item");
+        }
+      } catch (error) {
+        console.error("Delete error:", error);
+        alert("Server error while deleting item");
+      }
+    }
+
+    async function markAsFound(id) {
+      const foundByName = prompt("Enter finder name:");
+      if (!foundByName) return;
+
+      const foundByEmail = prompt("Enter finder email:");
+      if (!foundByEmail) return;
+
+      const foundPlace = prompt("Enter found place:");
+      if (!foundPlace) return;
+
+      const foundMessage = prompt("Enter message (optional):") || "";
+
+      if (!foundByName.trim() || !foundByEmail.trim() || !foundPlace.trim()) {
+        alert("All required fields must be filled");
+        return;
+      }
+
+      try {
+        const response = await fetch(`http://localhost:5000/api/items/${id}/found`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            foundByName: foundByName.trim(),
+            foundByEmail: foundByEmail.trim(),
+            foundPlace: foundPlace.trim(),
+            foundMessage: foundMessage.trim()
+          })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          alert(data.message || "Item marked as found");
+          loadMyReports();
+        } else {
+          alert(data.message || "Failed to mark item as found");
+        }
+      } catch (error) {
+        console.error("Mark found error:", error);
+        alert("Server error");
+      }
+    }
+
+    loadMyReports();
+  </script>
+
+</body>
+</html>

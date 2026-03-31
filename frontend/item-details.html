@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Item Details | Campus Lost & Found</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <nav class="navbar">
+    <div class="logo">Campus Lost & Found</div>
+    <div class="nav-right">
+      <span class="user-name" id="welcomeName">Welcome, User</span>
+      <a href="#" class="logout-btn" id="logoutBtn">Logout</a>
+    </div>
+  </nav>
+
+  <div class="page-container">
+    <div class="page-header">
+      <h1>Item Details</h1>
+      <p>View the complete details of the selected item.</p>
+    </div>
+
+    <div class="details-container" id="detailsContainer"></div>
+  </div>
+
+  <script>
+    const userName = localStorage.getItem("userName");
+    const userEmail = localStorage.getItem("userEmail");
+
+    if (!userName || !userEmail) {
+      window.location.href = "login.html";
+    } else {
+      document.getElementById("welcomeName").textContent = "Welcome, " + userName;
+    }
+
+    document.getElementById("logoutBtn").addEventListener("click", function (e) {
+      e.preventDefault();
+      localStorage.removeItem("userName");
+      localStorage.removeItem("userEmail");
+      window.location.href = "login.html";
+    });
+
+    const params = new URLSearchParams(window.location.search);
+    const itemId = params.get("id");
+
+    async function loadItemDetails() {
+      const detailsContainer = document.getElementById("detailsContainer");
+
+      if (!itemId) {
+        detailsContainer.innerHTML = "<p>Item ID not found.</p>";
+        return;
+      }
+
+      try {
+        const response = await fetch(`http://localhost:5000/api/items/${itemId}`);
+        const item = await response.json();
+
+        if (!response.ok) {
+          detailsContainer.innerHTML = `<p>${item.message || "Item not found."}</p>`;
+          return;
+        }
+
+        let foundDetails = "";
+        if (item.status === "found") {
+          foundDetails = `
+            <div class="found-info">
+              <h3>Found Details</h3>
+              <p><strong>Found by:</strong> ${item.foundByName || "Not available"}</p>
+              <p><strong>Email:</strong> ${item.foundByEmail || "Not available"}</p>
+              <p><strong>Place:</strong> ${item.foundPlace || "Not available"}</p>
+              <p><strong>Message:</strong> ${item.foundMessage || "No message"}</p>
+            </div>
+          `;
+        }
+
+        // ❌ Removed Mark as Found button completely
+
+        detailsContainer.innerHTML = `
+          <div class="details-card">
+            <div class="details-content">
+              <h2>${item.itemName}</h2>
+
+              <p><strong>Type:</strong> ${item.type}</p>
+              <p><strong>Category:</strong> ${item.category}</p>
+              <p><strong>Location:</strong> ${item.location}</p>
+              <p><strong>Date:</strong> ${item.date}</p>
+              <p><strong>Description:</strong> ${item.description}</p>
+              <p><strong>Reported By:</strong> ${item.userName || "Unknown"}</p>
+              <p><strong>Status:</strong> ${item.status}</p>
+
+              ${foundDetails}
+
+              <div class="details-actions">
+                <a href="view-items.html" class="details-btn">Back to Items</a>
+              </div>
+            </div>
+          </div>
+        `;
+
+      } catch (error) {
+        console.error("Error loading item details:", error);
+        detailsContainer.innerHTML = "<p>Failed to load item details.</p>";
+      }
+    }
+
+    loadItemDetails();
+  </script>
+</body>
+</html>
