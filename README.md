@@ -20,7 +20,9 @@ The system is designed to intelligently match items and improve recovery chances
 Built as a full-stack project using:
 
 Frontend: HTML, CSS, JavaScript
+
 Backend: Node.js, Express.js
+
 Database: MongoDB
 
 This project aims to provide a simple, efficient, and user-friendly platform to manage lost and found items while improving communication between users and enhancing the chances of item recovery within a campus community.
