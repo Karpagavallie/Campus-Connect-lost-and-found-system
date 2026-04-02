@@ -1,5 +1,26 @@
-CampusConnect: Lost & Found System is a full-stack web application developed to help people efficiently report, search, and recover lost items within a campus. The system allows users to securely log in and report lost items by providing details such as item name, category, location, date, and description. Similarly, other users can report found items with the same set of details, creating a centralized platform for item tracking and recovery.
+CampusConnect: Lost & Found System is a full-stack web application developed using HTML, CSS, and JavaScript that helps users efficiently report, and recover lost and found items within a campus environment.
 
-The application includes a powerful search feature that enables users to find items based on name, category, location, and status (lost or found). Users can also view all reported items and manage their own reports through the “My Reports” section, where they can edit, delete, or mark lost items as found. Additionally, the dashboard provides a “Recent Updates” section that displays the latest found items from all users, helping improve visibility and recovery chances.
+The system allows users to report lost items by entering details such as item name, category, location, date, and description. Users can also report found items by providing similar details along with an optional image upload. This creates a centralized platform where all item reports are stored and managed.
 
-Built using HTML, CSS, and JavaScript for the frontend, along with Node.js and Express.js for the backend, and MongoDB as the database, this project offers a simple yet effective solution for managing lost and found items. The main goal of CampusConnect is to streamline the process of reporting and recovering items while fostering a connected and helpful campus community.
+Users can log in to their accounts and:
+
+Submit lost or found item reports
+View their own reported items in the “My Reports” section
+Edit or delete their submitted reports
+Mark a lost item as found by providing details such as found user name, email, location, and a message
+
+The application includes an admin dashboard where the admin can:
+
+View all reported lost and found items
+Automatically match lost and found items based on item name, location, description, and image
+Facilitate communication between users by sending an email to the owner of the lost item containing the founder’s name and contact email
+
+The system is designed to intelligently match items and improve recovery chances by comparing multiple attributes of reported items.
+
+Built as a full-stack project using:
+
+Frontend: HTML, CSS, JavaScript
+Backend: Node.js, Express.js
+Database: MongoDB
+
+This project aims to provide a simple, efficient, and user-friendly platform to manage lost and found items while improving communication between users and enhancing the chances of item recovery within a campus community.
