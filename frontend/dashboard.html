@@ -8,6 +8,7 @@
 </head>
 <body>
 
+  <!-- Navbar -->
   <nav class="navbar">
     <div class="logo">Campus Lost & Found</div>
     <div class="nav-right">
@@ -16,7 +17,9 @@
     </div>
   </nav>
 
+  <!-- Dashboard -->
   <div class="dashboard-wrapper">
+
     <div class="dashboard-header">
       <h1>Dashboard</h1>
       <p>Manage lost and found items easily from one place.</p>
@@ -24,62 +27,58 @@
 
     <div class="dashboard-layout">
 
+      <!-- Cards Section -->
       <div class="dashboard-grid">
+
         <a href="report-lost.html" class="dashboard-card">
-          <img src="images/lost.png" class="card-image">
+          <img src="images/lost.png" class="card-image" alt="Lost">
           <h3>Report Lost Item</h3>
           <p>Submit details of an item you lost.</p>
         </a>
 
         <a href="report-found.html" class="dashboard-card">
-          <img src="images/found.png" class="card-image">
+          <img src="images/found.png" class="card-image" alt="Found">
           <h3>Report Found Item</h3>
           <p>Post details of an item you found.</p>
         </a>
 
-        <a href="view-items.html" class="dashboard-card">
-          <img src="images/view.png" class="card-image">
-          <h3>View All Items</h3>
-          <p>Browse all lost and found reports.</p>
-        </a>
-
-        <a href="search.html" class="dashboard-card">
-          <img src="images/search.png" class="card-image">
-          <h3>Search Item</h3>
-          <p>Search items by name, category, location and status.</p>
-        </a>
-
         <a href="my-reports.html" class="dashboard-card">
-          <img src="images/report.png" class="card-image">
+          <img src="images/report.png" class="card-image" alt="Reports">
           <h3>My Reports</h3>
-          <p>Manage your posted lost and found reports.</p>
+          <p>View all your submitted reports.</p>
         </a>
+
       </div>
 
+      <!-- Recent Updates Section -->
       <div class="recent-box">
+
         <div class="recent-header">
-          <h2>Recent Updates</h2>
-          <a href="view-items.html" class="view-all-link">View All</a>
+          <h2>Recent Found Items</h2>
         </div>
 
         <div class="recent-cards" id="recentUpdatesContainer">
           <p>Loading recent updates...</p>
         </div>
+
       </div>
 
     </div>
   </div>
 
   <script>
+    // Get user details from localStorage
     const userName = localStorage.getItem("userName");
     const userEmail = localStorage.getItem("userEmail");
 
+    // Redirect if not logged in
     if (!userName || !userEmail) {
       window.location.href = "login.html";
     } else {
       document.getElementById("welcomeName").textContent = "Welcome, " + userName;
     }
 
+    // Logout
     document.getElementById("logoutBtn").addEventListener("click", function (e) {
       e.preventDefault();
       localStorage.removeItem("userName");
@@ -87,6 +86,7 @@
       window.location.href = "login.html";
     });
 
+    // Format time ago
     function formatTimeAgo(dateString) {
       const now = new Date();
       const created = new Date(dateString);
@@ -102,13 +102,12 @@
       return `${days} day${days > 1 ? "s" : ""} ago`;
     }
 
+    // Format date
     function formatDisplayDate(dateString) {
       if (!dateString) return "No date";
       const date = new Date(dateString);
 
-      if (isNaN(date.getTime())) {
-        return dateString;
-      }
+      if (isNaN(date.getTime())) return dateString;
 
       return date.toLocaleDateString("en-GB", {
         day: "2-digit",
@@ -117,35 +116,34 @@
       });
     }
 
+    // Load recent found items
     async function loadRecentUpdates() {
       const container = document.getElementById("recentUpdatesContainer");
 
       try {
-        // ✅ FETCH ALL USERS ITEMS
         const response = await fetch("http://localhost:5000/api/items");
         const items = await response.json();
 
         if (!response.ok) {
-          container.innerHTML = "<p>Failed to load recent updates.</p>";
+          container.innerHTML = "<p>Failed to load updates.</p>";
           return;
         }
 
         if (!items.length) {
-          container.innerHTML = "<p>No recent updates found.</p>";
+          container.innerHTML = "<p>No updates found.</p>";
           return;
         }
 
-        // ✅ ONLY FOUND ITEMS + LIMIT TO 4
-        const foundUpdates = items
+        const foundItems = items
           .filter(item => item.status === "found")
           .slice(0, 4);
 
-        if (!foundUpdates.length) {
-          container.innerHTML = "<p>No found-item updates yet.</p>";
+        if (!foundItems.length) {
+          container.innerHTML = "<p>No found items yet.</p>";
           return;
         }
 
-        container.innerHTML = foundUpdates.map(item => `
+        container.innerHTML = foundItems.map(item => `
           <div class="mini-update-card">
             <div class="update-top">
               <span class="status-badge found">Found</span>
@@ -155,8 +153,6 @@
             </div>
 
             <h4>${item.itemName}</h4>
-            <p><strong>Found by:</strong> ${item.foundByName || "Not available"}</p>
-            <p><strong>Email:</strong> ${item.foundByEmail || "Not available"}</p>
             <p><strong>Place:</strong> ${item.foundPlace || "Not available"}</p>
             <p><strong>Date:</strong> ${formatDisplayDate(item.date)}</p>
 
@@ -167,8 +163,8 @@
         `).join("");
 
       } catch (error) {
-        console.error("Error loading recent updates:", error);
-        container.innerHTML = "<p>Server error while loading updates.</p>";
+        console.error(error);
+        container.innerHTML = "<p>Error loading updates.</p>";
       }
     }
 

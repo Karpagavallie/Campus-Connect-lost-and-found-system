@@ -2,7 +2,20 @@ const express = require("express");
 const router = express.Router();
 const Item = require("../models/Item");
 
-// Report Lost Item
+
+// ================= MATCH FUNCTION =================
+function isMatch(lost, found) {
+  const lostName = lost.itemName.toLowerCase();
+  const foundName = found.itemName.toLowerCase();
+
+  return (
+    lostName.includes(foundName) ||
+    foundName.includes(lostName)
+  );
+}
+
+
+// ================= REPORT LOST ITEM =================
 router.post("/lost", async (req, res) => {
   try {
     const {
@@ -43,7 +56,8 @@ router.post("/lost", async (req, res) => {
   }
 });
 
-// Report Found Item
+
+// ================= REPORT FOUND ITEM =================
 router.post("/found", async (req, res) => {
   try {
     const {
@@ -84,7 +98,8 @@ router.post("/found", async (req, res) => {
   }
 });
 
-// Get all items
+
+// ================= GET ALL ITEMS =================
 router.get("/", async (req, res) => {
   try {
     const items = await Item.find().sort({ createdAt: -1 });
@@ -95,7 +110,8 @@ router.get("/", async (req, res) => {
   }
 });
 
-// Filter items by type: all / lost / found
+
+// ================= FILTER ITEMS =================
 router.get("/filter", async (req, res) => {
   try {
     const { type } = req.query;
@@ -113,7 +129,8 @@ router.get("/filter", async (req, res) => {
   }
 });
 
-// Get items by user email
+
+// ================= GET USER ITEMS =================
 router.get("/my/:email", async (req, res) => {
   try {
     const items = await Item.find({ userEmail: req.params.email }).sort({ createdAt: -1 });
@@ -124,7 +141,31 @@ router.get("/my/:email", async (req, res) => {
   }
 });
 
-// Get single item by id
+
+// ================= GET MATCHES FOR LOST ITEM =================
+router.get("/:id/matches", async (req, res) => {
+  try {
+    const lostItem = await Item.findById(req.params.id);
+
+    if (!lostItem || lostItem.type !== "lost") {
+      return res.status(404).json({ message: "Lost item not found" });
+    }
+
+    const foundItems = await Item.find({ type: "found" });
+
+    const matches = foundItems.filter(foundItem =>
+      isMatch(lostItem, foundItem)
+    );
+
+    res.status(200).json(matches);
+  } catch (error) {
+    console.log("MATCH ERROR:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+// ================= GET ITEM BY ID =================
 router.get("/:id", async (req, res) => {
   try {
     const item = await Item.findById(req.params.id);
@@ -140,7 +181,8 @@ router.get("/:id", async (req, res) => {
   }
 });
 
-// Edit item
+
+// ================= UPDATE ITEM =================
 router.put("/:id", async (req, res) => {
   try {
     const {
@@ -177,7 +219,8 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-// Delete item
+
+// ================= DELETE ITEM =================
 router.delete("/:id", async (req, res) => {
   try {
     const deletedItem = await Item.findByIdAndDelete(req.params.id);
@@ -193,7 +236,8 @@ router.delete("/:id", async (req, res) => {
   }
 });
 
-// Mark lost item as found with finder details
+
+// ================= MARK LOST ITEM AS FOUND =================
 router.put("/:id/found", async (req, res) => {
   try {
     const {

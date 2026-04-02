@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #111;
+      color: white;
+      margin: 0;
+    }
+
+    .admin-container {
+      padding: 20px;
+    }
+
+    .admin-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    button {
+      padding: 10px;
+      margin: 5px;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+    }
+
+    .admin-buttons button {
+      background: #444;
+      color: white;
+    }
+
+    .admin-card {
+      background: #222;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 10px;
+    }
+
+    .match-btn {
+      background: green;
+      color: white;
+    }
+
+    .admin-logout {
+      background: red;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+
+<div class="admin-container">
+
+  <div class="admin-header">
+    <h1>Admin Dashboard</h1>
+    <button class="admin-logout" onclick="logout()">Logout</button>
+  </div>
+
+  <div class="admin-buttons">
+    <button onclick="loadLost()">View Lost</button>
+    <button onclick="loadFound()">View Found</button>
+    <button onclick="loadMatches()">View Matches</button>
+  </div>
+
+  <div id="content"></div>
+
+</div>
+
+<script>
+  const content = document.getElementById("content");
+
+  function logout() {
+    window.location.href = "adminlogin.html";
+  }
+
+  // ================= LOST =================
+  async function loadLost() {
+    const res = await fetch("http://localhost:5000/api/lost");
+    const data = await res.json();
+    renderItems(data);
+  }
+
+  // ================= FOUND =================
+  async function loadFound() {
+    const res = await fetch("http://localhost:5000/api/found");
+    const data = await res.json();
+    renderItems(data);
+  }
+
+  // ================= MATCHES =================
+  async function loadMatches() {
+    const res = await fetch("http://localhost:5000/api/match");
+    const data = await res.json();
+    renderMatches(data);
+  }
+
+  // ================= RENDER ITEMS =================
+  function renderItems(items) {
+    content.innerHTML = "";
+
+    if (!items.length) {
+      content.innerHTML = "<p>No data found</p>";
+      return;
+    }
+
+    items.forEach(item => {
+      const div = document.createElement("div");
+      div.className = "admin-card";
+
+      div.innerHTML = `
+        <h3>${item.itemName}</h3>
+        <p>${item.description}</p>
+        <p>${item.location}</p>
+        <p>User: ${item.userEmail}</p>
+        <p>Status: ${item.status || "Pending"}</p>
+      `;
+
+      content.appendChild(div);
+    });
+  }
+
+  // ================= RENDER MATCHES =================
+  function renderMatches(matches) {
+    content.innerHTML = "";
+
+    if (!matches.length) {
+      content.innerHTML = "<p>No matches found</p>";
+      return;
+    }
+
+    matches.forEach(pair => {
+      const div = document.createElement("div");
+      div.className = "admin-card";
+
+      div.innerHTML = `
+        <h3>Match Found</h3>
+
+        <p><b>Lost:</b> ${pair.lost.itemName}</p>
+        <p><b>Found:</b> ${pair.found.itemName}</p>
+
+        <p><b>Lost User:</b> ${pair.lost.userEmail}</p>
+        <p><b>Found User:</b> ${pair.found.userEmail}</p>
+
+        <button class="match-btn" onclick="approveMatch('${pair.lost._id}', '${pair.found._id}')">
+          Approve Match
+        </button>
+      `;
+
+      content.appendChild(div);
+    });
+  }
+
+  // ================= APPROVE MATCH =================
+  async function approveMatch(lostId, foundId) {
+    const res = await fetch("http://localhost:5000/api/approve-match", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ lostId, foundId })
+    });
+
+    const data = await res.json();
+    alert(data.message);
+
+    loadMatches();
+  }
+</script>
+
+</body>
+</html>

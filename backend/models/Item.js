@@ -31,19 +31,21 @@ const itemSchema = new mongoose.Schema(
       trim: true
     },
 
+    // lost or found
     type: {
       type: String,
       enum: ["lost", "found"],
       required: true
     },
 
+    // ✅ updated status enum (FIXED)
     status: {
       type: String,
-      enum: ["active", "found", "closed"],
+      enum: ["active", "matched", "closed"],
       default: "active"
     },
 
-    // 🔥 who posted the item
+    // who posted the item
     userName: {
       type: String,
       required: true
@@ -54,7 +56,7 @@ const itemSchema = new mongoose.Schema(
       required: true
     },
 
-    // 🔥 NEW: who found the item
+    // who found the item
     foundByName: {
       type: String,
       default: ""

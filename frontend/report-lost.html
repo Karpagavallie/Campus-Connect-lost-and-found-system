@@ -17,6 +17,7 @@
   </nav>
 
   <div class="page-container">
+
     <div class="page-header">
       <h1>Report Lost Item</h1>
       <p>Submit details of the item you lost.</p>
@@ -24,10 +25,11 @@
 
     <div class="form-card">
       <form id="lostForm">
-        <label for="itemName">Item Name</label>
+
+        <label>Item Name</label>
         <input type="text" id="itemName" placeholder="Enter item name" required />
 
-        <label for="category">Category</label>
+        <label>Category</label>
         <select id="category" required>
           <option value="">Select category</option>
           <option>Wallet</option>
@@ -38,20 +40,26 @@
           <option>Other</option>
         </select>
 
-        <label for="location">Lost Location</label>
+        <label>Lost Location</label>
         <input type="text" id="location" placeholder="Enter lost location" required />
 
-        <label for="date">Lost Date</label>
+        <label>Lost Date</label>
         <input type="date" id="date" required />
 
-        <label for="description">Description</label>
+        <label>Description</label>
         <textarea id="description" placeholder="Describe the lost item" required></textarea>
 
+        <!-- ✅ OPTIONAL IMAGE -->
+        <label>Upload Image (Optional)</label>
+        <input type="file" id="image" accept="image/*" />
+
         <button type="submit">Submit Lost Report</button>
+
       </form>
 
       <p id="message"></p>
     </div>
+
   </div>
 
   <script>
@@ -82,44 +90,67 @@
       const location = document.getElementById("location").value.trim();
       const date = document.getElementById("date").value;
       const description = document.getElementById("description").value.trim();
+      const imageFile = document.getElementById("image").files[0];
 
       if (!itemName || !category || !location || !date || !description) {
         message.style.color = "red";
-        message.textContent = "Please fill all fields";
+        message.textContent = "Please fill all required fields";
         return;
       }
 
       try {
-        const response = await fetch("http://localhost:5000/api/items/lost", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            itemName,
-            category,
-            location,
-            date,
-            description,
-            userName,
-            userEmail
-          })
-        });
+        let imageData = null;
 
-        const data = await response.json();
+        // Convert image to Base64 if uploaded
+        if (imageFile) {
+          const reader = new FileReader();
+          reader.readAsDataURL(imageFile);
 
-        if (response.ok) {
-          message.style.color = "green";
-          message.textContent = data.message;
-          form.reset();
-
-          setTimeout(() => {
-            window.location.href = "dashboard.html";
-          }, 1000);
+          reader.onload = async () => {
+            imageData = reader.result;
+            await submitData(imageData);
+          };
         } else {
-          message.style.color = "red";
-          message.textContent = data.message || "Failed to submit report";
+          await submitData(null);
         }
+
+        async function submitData(imageData) {
+          const response = await fetch("http://localhost:5000/api/items/lost", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              itemName,
+              category,
+              location,
+              date,
+              description,
+              userName,
+              userEmail,
+              status: "lost",   // ✅ IMPORTANT
+              image: imageData   // ✅ OPTIONAL IMAGE
+            })
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            message.style.color = "green";
+            message.textContent = data.message || "Lost item reported successfully";
+
+            form.reset();
+
+            setTimeout(() => {
+              window.location.href = "dashboard.html";
+            }, 1000);
+
+          } else {
+            message.style.color = "red";
+            message.textContent = data.message || "Failed to submit report";
+          }
+        }
+
       } catch (error) {
         console.error(error);
         message.style.color = "red";
@@ -129,4 +160,4 @@
   </script>
 
 </body>
-</html>report-lost.html
+</html>
